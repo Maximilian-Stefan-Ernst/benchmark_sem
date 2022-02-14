@@ -1,0 +1,3 @@
+#!/bin/bash
+
+singularity exec --writable sem-writ.simg Rscript cfa/analyze_results.R TRUE

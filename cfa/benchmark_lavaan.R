@@ -8,7 +8,8 @@ source("cfa/functions.R")
 args <- commandArgs(trailingOnly = TRUE)
 date <- args[1]
 
-results <- readr::read_rds("cfa/results.rds")
+results <- read_csv("cfa/config.csv")
+results <- filter(results, meanstructure == 0)
 
 results <-
   mutate(results,
@@ -18,6 +19,25 @@ results <-
              ~with(
                list(...),
                lavaan_model(n_factors, n_items, meanstructure))))
+
+results <-
+  mutate(results,
+    data = pmap(
+      results,
+        ~with(
+          list(...),
+          read_csv(paste(
+            "cfa/data/",
+            "n_factors_",
+            n_factors,
+            "_n_items_",
+            n_items,
+            "_meanstructure_",
+            meanstructure,
+            ".csv", sep = ""))
+            )
+          )
+        )
 
 # results$model_lavaan[[24]] <- str_remove_all(results$model_lavaan[[24]], "NA")
 # results$model_lavaan[[12]] <- str_remove_all(results$model_lavaan[[12]], "NA")
@@ -42,6 +62,15 @@ results <-
              start,
              parTable))
 
+results <- mutate(
+  results,
+  n_par = map2_dbl(
+    n_factors,
+    n_items,
+    ~ 2*(.x*.y) + .x*(.x-1)/2
+    )
+  )
+
 const <- 3*(results$n_par[length(results$n_par)]^2)
 
 results <- mutate(
@@ -50,8 +79,6 @@ results <- mutate(
 
 #!!!
 # results$n_repetitions <- 10
-
-results <- filter(results, meanstructure == 0)
 ##
 
 benchmarks <- pmap(
@@ -67,25 +94,22 @@ benchmarks <- pmap(
 
 benchmark_summary <- map_dfr(benchmarks, extract_results)
 
-# benchmark_summary <- rename_with(benchmark_summary, ~str_c(.x, "_lav"))
-# results <- bind_cols(results, benchmark_summary)
+results <- bind_cols(results, benchmark_summary)
 
 write_csv2(
     select(
-    results, 
-    Estimator, 
-    n_factors, 
-    n_items, 
+    results,
+    Estimator,
+    n_factors,
+    n_items,
     meanstructure,
     n_repetitions,
-    n_obs,
-    mean_time_lav,
-    median_time_lav,
-    sd_time_lav,
-    n_par,
-    error_lav,
-    warnings_lav,
-    messages_lav), 
-  paste("cfa/results/benchmarks_lavaan_", date, ".csv", sep = ""))
+    mean_time,
+    median_time,
+    sd_time,
+    error,
+    warnings,
+    messages),
+    paste("cfa/results/benchmarks_lavaan_", date, ".csv", sep = ""))
 
 # write_rds(results, "results.rds")

@@ -1,6 +1,6 @@
 using DataFrames, StructuralEquationModels, Symbolics, 
     LinearAlgebra, SparseArrays, Optim, LineSearches,
-    BenchmarkTools, CSV
+    BenchmarkTools, CSV, Statistics
 
 date = string(ARGS...)
 
@@ -38,7 +38,11 @@ benchmarks = benchmark_models(models)
 
 results = select(config, :Estimator, :n_factors, :n_items, :meanstructure, :backend, :correct)
 
-results.median_time_jl = median.(getfield.(benchmarks, :times))
-results.n_par = 2*(results.n_factors*results.n_items) + results.n_factors*(results.n_factors-1)/2,
+results.median_time = median.(getfield.(benchmarks, :times))
+results.mean_time = median.(getfield.(benchmarks, :times))
+results.sd_time = std.(getfield.(benchmarks, :times))
+results.n_repetitions = getfield.(getfield.(benchmarks, :params), :evals).*getfield.(getfield.(benchmarks, :params), :samples)
+
+# results.n_par = 2*(results.n_factors.*results.n_items) + results.n_factors.*(results.n_factors.-1)/2,
 
 CSV.write("results/benchmarks_julia_"*date*".csv", results, delim = ";")
