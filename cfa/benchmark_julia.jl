@@ -41,7 +41,7 @@ results = select(config, :Estimator, :n_factors, :n_items, :meanstructure, :back
 results.median_time = median.(getfield.(benchmarks, :times))
 results.mean_time = median.(getfield.(benchmarks, :times))
 results.sd_time = std.(getfield.(benchmarks, :times))
-results.n_repetitions = getfield.(getfield.(benchmarks, :params), :evals).*getfield.(getfield.(benchmarks, :params), :samples)
+results.n_repetitions = vec(getfield.(getfield.(benchmarks, :params), :samples))
 
 # results.n_par = 2*(results.n_factors.*results.n_items) + results.n_factors.*(results.n_factors.-1)/2,
 
