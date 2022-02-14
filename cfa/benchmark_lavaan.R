@@ -4,10 +4,9 @@ library(purrr)
 library(readr)
 
 set.seed(73647820)
-setwd("./benchmark/cfa")
-source("functions.R")
+source("cfa/functions.R")
 
-results <- readr::read_rds("results.rds")
+results <- readr::read_rds("cfa/results.rds")
 
 results <-
   mutate(results,
@@ -19,7 +18,7 @@ results <-
                lavaan_model(n_factors, n_items, meanstructure))))
 
 # results$model_lavaan[[24]] <- str_remove_all(results$model_lavaan[[24]], "NA")
-results$model_lavaan[[12]] <- str_remove_all(results$model_lavaan[[12]], "NA")
+# results$model_lavaan[[12]] <- str_remove_all(results$model_lavaan[[12]], "NA")
 
 results <-
   mutate(results,
@@ -69,19 +68,21 @@ benchmark_summary <- rename_with(benchmark_summary, ~str_c(.x, "_lav"))
 
 results <- bind_cols(results, benchmark_summary)
 
-write_csv2(select(
-  results, 
-  Estimator, 
-  n_factors, 
-  n_items, 
-  meanstructure,
-  n_repetitions,
-  n_obs,
-  mean_time_lav,
-  median_time_lav,
-  sd_time_lav,
-  error_lav,
-  warnings_lav,
-  messages_lav), "results/benchmarks_lavaan.csv")
+write_csv2(
+    select(
+    results, 
+    Estimator, 
+    n_factors, 
+    n_items, 
+    meanstructure,
+    n_repetitions,
+    n_obs,
+    mean_time_lav,
+    median_time_lav,
+    sd_time_lav,
+    error_lav,
+    warnings_lav,
+    messages_lav), 
+  paste("cfa/results/benchmarks_lavaan_", date, ".csv", sep = ""))
 
-write_rds(results, "results.rds")
+# write_rds(results, "results.rds")

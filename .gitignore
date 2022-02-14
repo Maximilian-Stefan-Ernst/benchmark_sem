@@ -40,3 +40,6 @@ Manifest.toml
 /sem/results/
 /sem/*.csv
 /sem/*.rds
+
+/regsem/*.csv
+/regsem/*.rds
