@@ -171,12 +171,12 @@ if (compare_lavaan) {
         ggplot(aes(
             x = n_parameters,
             y = ratio_julia_lavaan)) +
-        geom_point() +
-        geom_line() +
+        geom_point(color = "#d11131") +
+        geom_line(color = "#d11131") +
         theme_minimal() +
         theme(text = element_text(color = "white")) +
         scale_y_continuous(
-            limits = c(0, NA),
+            limits = c(0, 1),
             breaks = c(seq(0, 0.1, 0.02), seq(0.1, 1, 0.1))
         )
 }
