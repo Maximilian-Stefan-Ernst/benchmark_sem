@@ -40,4 +40,4 @@ results = select(config, :Estimator, :n_factors, :n_items, :meanstructure, :back
 
 results.median_time_jl = median.(getfield.(benchmarks, :times))
 
-CSV.write("results/benchmarks_julia_"*date*.csv", results, delim = ";")
+CSV.write("results/benchmarks_julia_"*date*".csv", results, delim = ";")

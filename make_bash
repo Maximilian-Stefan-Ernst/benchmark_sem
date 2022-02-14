@@ -1,0 +1,15 @@
+#!/bin/bash
+
+bash install_container_bash
+
+bash install_packages_bash
+
+bash install_sem_devel_bash
+
+# bash cfa/julia_bash
+
+# bash cfa/lavaan_bash
+
+# bash sem/julia_bash
+
+# bash sem/lavaan_bash
