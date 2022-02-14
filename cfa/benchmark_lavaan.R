@@ -5,6 +5,8 @@ library(readr)
 
 set.seed(73647820)
 source("cfa/functions.R")
+args <- commandArgs(trailingOnly = TRUE)
+date <- args[1]
 
 results <- readr::read_rds("cfa/results.rds")
 
@@ -64,9 +66,9 @@ benchmarks <- pmap(
   )
 
 benchmark_summary <- map_dfr(benchmarks, extract_results)
-benchmark_summary <- rename_with(benchmark_summary, ~str_c(.x, "_lav"))
 
-results <- bind_cols(results, benchmark_summary)
+# benchmark_summary <- rename_with(benchmark_summary, ~str_c(.x, "_lav"))
+# results <- bind_cols(results, benchmark_summary)
 
 write_csv2(
     select(
@@ -80,6 +82,7 @@ write_csv2(
     mean_time_lav,
     median_time_lav,
     sd_time_lav,
+    n_par,
     error_lav,
     warnings_lav,
     messages_lav), 

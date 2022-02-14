@@ -1,3 +1,3 @@
 #!/bin/bash
 
-singularity exec --writable sem-writ.simg Rscript cfa/testfile.R `date +%F_%H_%M`
+singularity exec --writable sem-writ.simg Rscript cfa/benchmark_lavaan.R `date +%F_%H_%M`

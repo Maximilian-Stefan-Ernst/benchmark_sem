@@ -39,5 +39,6 @@ benchmarks = benchmark_models(models)
 results = select(config, :Estimator, :n_factors, :n_items, :meanstructure, :backend, :correct)
 
 results.median_time_jl = median.(getfield.(benchmarks, :times))
+results.n_par = 2*(results.n_factors*results.n_items) + results.n_factors*(results.n_factors-1)/2,
 
 CSV.write("results/benchmarks_julia_"*date*".csv", results, delim = ";")
