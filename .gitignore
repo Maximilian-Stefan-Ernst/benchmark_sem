@@ -31,8 +31,10 @@ Manifest.toml
 /cfa/data/
 /cfa/parest/
 /cfa/results/
+cfa/plots/
 /cfa/*.csv
 /cfa/*.rds
+/cfa/*.html
 /sem-writ.simg/
 /sem/.Rhistory
 /sem/data/
@@ -45,3 +47,4 @@ Manifest.toml
 /regsem/*.rds
 
 *.sif
+

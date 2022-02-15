@@ -1,3 +1,15 @@
+---
+title: "CFA Benchmark Results"
+author: "Maximilian Ernst"
+date: "2/15/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load packages, include = FALSE}
 library(ggplot2)
 library(readr)
 library(stringr)
@@ -5,14 +17,12 @@ library(lubridate)
 library(dplyr)
 library(purrr)
 library(tidyr)
+```
 
-# command line arguments
-# args <- commandArgs(trailingOnly = TRUE)
-# compare_lavaan <- tolower(args[1]) == "true"
-
+```{r load data, echo = FALSE}
 # list all result files
 
-files <- list.files("cfa/results")
+files <- list.files("results")
 
 files_julia <- str_subset(files, "julia")
 files_lavaan <- str_subset(files, "lavaan")
@@ -38,7 +48,7 @@ files_julia <- files_julia$filename[1:2]
 data_julia <- map(
     files_julia, 
     ~read_delim(
-        paste("cfa/results/", .x, sep = ""), 
+        paste("results/", .x, sep = ""), 
         delim = ";",  
         locale = locale(decimal_mark = "."),
         show_col_types = FALSE)
@@ -54,21 +64,24 @@ data_julia[[2]] <-
     package = "julia")
 
 data_julia <- bind_rows(data_julia)
+```
 
-# print if all models are correct
-print(paste("All models are correct:", all(data_julia$correct)))
 
+# Check solutions
+
+All models are correct: `r all(data_julia$correct)`
+
+```{r prepare data, echo=FALSE}
 data_julia <- mutate(
     data_julia,
     across(
         c(median_time, mean_time, sd_time), 
         function(x){x/1e9}))
 
-
 date_lavaan <- files_lavaan$date[1]
 file_lavaan <- files_lavaan$filename[1]
 data_lavaan <- read_delim(
-    paste("cfa/results/", file_lavaan, sep = ""),
+    paste("results/", file_lavaan, sep = ""),
     delim = ";",
     locale = locale(decimal_mark = ","),
     show_col_types = FALSE)
@@ -87,10 +100,12 @@ data <- mutate(
     n_parameters = 2*(n_factors*n_items) + n_factors*(n_factors-1)/2,
     se = sd_time/sqrt(n_repetitions)
     )
+```
 
-# plots
-# compare julia versions
-p1 <- data %>%
+# Julia Versions
+
+```{r julia, echo=FALSE}
+data %>%
     filter(package == "julia") %>%
     ggplot(aes(
         x = n_parameters, 
@@ -100,10 +115,11 @@ p1 <- data %>%
     geom_line() +
     geom_errorbar(aes(ymin = median_time - 2*se, ymax = median_time + 2*se)) +
     labs(color = "time:package") +
-    theme_minimal() +
-    theme(text = element_text(color = "white"))
+    theme_minimal()
+```
 
-p2 <- data %>%
+```{r julia log, echo=FALSE}
+data %>%
     filter(package == "julia") %>%
     ggplot(aes(
         x = n_parameters, 
@@ -115,9 +131,11 @@ p2 <- data %>%
     labs(color="time:package") +
     theme_minimal() +
     scale_y_log10() +
-    theme(text = element_text(color = "white"))
+    scale_x_log10()
+```
 
-p2.2 <- data %>%
+```{r julia ratio, echo=FALSE}
+data %>%
     filter(package == "julia") %>%
     mutate(datetime = ifelse(datetime == julia_latest, "latest", "previous")) %>%
     select(n_parameters, datetime, median_time) %>%
@@ -132,9 +150,12 @@ p2.2 <- data %>%
     geom_line() +
     theme_minimal() +
     theme(text = element_text(color = "white"))
+```
 
-# compare with lavaan
-p3 <- data %>%
+# Comparison to Lavaan
+
+```{r lavaan, echo=FALSE}
+data %>%
     ggplot(aes(
         x = n_parameters, 
         y = median_time, 
@@ -143,10 +164,11 @@ p3 <- data %>%
     geom_line() +
     geom_errorbar(aes(ymin = median_time - 2*se, ymax = median_time + 2*se)) +
     labs(color="time:package") +
-    theme_minimal() +
-    theme(text = element_text(color = "white"))
+    theme_minimal()
+```
 
-p4 <- data %>%
+```{r lavaan log, echo=FALSE}
+data %>%
     ggplot(aes(
         x = n_parameters, 
         y = median_time, 
@@ -157,9 +179,11 @@ p4 <- data %>%
     labs(color = "time:package") +
     theme_minimal() +
     scale_y_log10() +
-    theme(text = element_text(color = "white"))
+    scale_x_log10()
+```
 
-p5 <- data %>%
+```{r lavaan ratio, echo=FALSE}
+data %>%
     filter((package == "lavaan"|datetime == julia_latest)) %>%
     select(n_parameters, package, median_time) %>%
     pivot_wider(
@@ -172,15 +196,8 @@ p5 <- data %>%
     geom_point(color = "#d11131") +
     geom_line(color = "#d11131") +
     theme_minimal() +
-    theme(text = element_text(color = "white")) +
     scale_y_continuous(
         limits = c(0, 1),
         breaks = c(seq(0, 0.1, 0.02), seq(0.1, 1, 0.1))
     )
-
-ggsave("cfa/results/plots/julia.png", p1)
-ggsave("cfa/results/plots/julia_log.png", p2)
-ggsave("cfa/results/plots/ratio_julia.png", p2.2)
-ggsave("cfa/results/plots/lavaan_julia.png", p3)
-ggsave("cfa/results/plots/lavaan_julia_log.png", p4)
-ggsave("cfa/results/plots/ratio_julia_lavaan.png", p5)
+```
