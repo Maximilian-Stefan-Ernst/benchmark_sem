@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# singularity exec --writable sem-writ.simg Rscript cfa/analyze_results.R
+
+singularity exec --writable sem-writ.simg Rscript -e "Sys.setenv(RSTUDIO_PANDOC='/usr/lib/rstudio/bin/pandoc'); rmarkdown::render('sem/analyze_results.Rmd')"

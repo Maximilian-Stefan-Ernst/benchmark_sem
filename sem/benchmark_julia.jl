@@ -1,16 +1,10 @@
-using Pkg
-
-Pkg.activate("test")
-
-using CSV
-
-Pkg.activate(".")
-
-using DataFrames, SEM, Symbolics, 
+using DataFrames, StructuralEquationModels, Symbolics, 
     LinearAlgebra, SparseArrays, Optim, LineSearches,
-    BenchmarkTools
+    BenchmarkTools, CSV, Statistics
 
-cd("benchmark\\sem")
+date = string(ARGS...)
+
+cd("sem")
 
 include("functions.jl")
 
@@ -21,28 +15,34 @@ config2.backend .= "NLopt.jl"
 
 config = [config; config2]
 
+config = filter(row -> (row.backend == "Optim.jl"), config)
+
 data_vec = read_files("data", get_data_paths(config))
-# par_vec = read_files("parest", get_data_paths(config))
+par_vec = read_files("parest", get_data_paths(config))
 # start_vec = read_files("start", get_data_paths(config))
 
 ##############################################
+
 models = gen_models(config, data_vec)
 
 fits = get_fits(models)
 
+correct = compare_estimates(fits, par_vec, config)
+
+config.correct = correct
+
 ##############################################
+# using MKL
 
-benchmarks = []
-for model in models
-    global modelxy = model
-    bm = @benchmark sem_fit(modelxy)
-    push!(benchmarks, bm)
-end
+benchmarks = benchmark_models(models)
 
+results = select(config, :Estimator, :n_factors, :n_items, :missingness, :backend, :correct)
 
+results.median_time = median.(getfield.(benchmarks, :times))
+results.mean_time = median.(getfield.(benchmarks, :times))
+results.sd_time = std.(getfield.(benchmarks, :times))
+results.n_repetitions = vec(getfield.(getfield.(benchmarks, :params), :samples))
 
-results = select(config, :Estimator, :n_factors, :n_items, :meanstructure, :backend)
+results.n_par = 3*(results.n_factors.*results.n_items) + results.n_factors.-1
 
-results.mean_time_jl = mean.(getfield.(benchmarks, :times))/1000000000
-
-CSV.write("results\\benchmarks_julia.csv", results, delim = ";")
+CSV.write("results/benchmarks_julia_"*date*".csv", results, delim = ";")

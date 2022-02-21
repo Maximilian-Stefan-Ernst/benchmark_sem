@@ -1,0 +1,3 @@
+#!/bin/bash
+
+singularity exec --writable sem-writ.simg julia sem/benchmark_julia.jl `date +%F_%H_%M`

@@ -1,8 +1,14 @@
-pacman::p_load(lavaan, dplyr, purrr, readr)
-set.seed(73647820)
-source("functions.R")
+library(lavaan)
+library(dplyr)
+library(purrr)
+library(readr)
 
-results <- readr::read_rds("results.rds")
+set.seed(73647820)
+source("sem/functions.R")
+args <- commandArgs(trailingOnly = TRUE)
+date <- args[1]
+
+results <- read_csv2("sem/config.csv")
 
 results <-
   mutate(results,
@@ -11,17 +17,61 @@ results <-
              results,
              ~with(
                list(...),
-               lavaan_model(n_factors, n_items, meanstructure))))
+               lavaan_model(n_factors, n_items))))
+
+results <-
+  mutate(results,
+    data = pmap(
+      results,
+        ~with(
+          list(...),
+          read_csv(str_c(
+            "sem/data/",
+            "n_factors_",
+            n_factors,
+            "_n_items_",
+            n_items,
+            "_missing_",
+            missingness,
+            ".csv"))
+          )
+        )
+  )
+
+#results <-
+#  mutate(results,
+#         start =
+#           pmap(
+#             results,
+#             ~with(
+#               list(...),
+#               sem(model_lavaan,
+#                 data,
+#                 missing = "fiml",
+#                 std.lv = TRUE,
+#                 do.fit = FALSE))))
+
+#results <-
+#  mutate(results,
+#         start =
+#           map(
+#             start,
+#             parTable))
+
+results <- mutate(
+  results,
+  n_par = map2_dbl(
+    n_factors,
+    n_items,
+    ~ 3*(.x*.y) + .x-1
+    )
+  )
 
 const <- 3*(results$n_par[length(results$n_par)]^2)
 
 results <- mutate(
   results,
   n_repetitions = round(const/(n_par^2)))
-
-#!!!
-results$n_repetitions <- 2
-##
 
 benchmarks <- pmap(
   results, 
@@ -34,34 +84,21 @@ benchmarks <- pmap(
   )
 
 benchmark_summary <- map_dfr(benchmarks, extract_results)
-benchmark_summary <- rename_with(benchmark_summary, ~str_c(.x, "_lav"))
 
 results <- bind_cols(results, benchmark_summary)
 
-results %>%
-  ggplot(aes(
-    x = n_factors * n_items,
-    y = mean_time_lav,
-    color = as.factor(missingness)
-  )) +
-  geom_line() +
-  geom_point() +
-  theme_minimal()
-  
-
-write_csv2(select(
-  results, 
-  Estimator, 
-  n_factors, 
-  n_items, 
-  missingness,
-  n_repetitions,
-  n_obs,
-  mean_time_lav,
-  median_time_lav,
-  sd_time_lav,
-  error_lav,
-  warnings_lav,
-  messages_lav), "results/benchmarks_lavaan.csv")
-
-write_rds(results, "results.rds")
+write_csv2(
+    select(
+    results,
+    Estimator,
+    n_factors,
+    n_items,
+    missingness,
+    n_repetitions,
+    mean_time,
+    median_time,
+    sd_time,
+    error,
+    warnings,
+    messages),
+    paste("sem/results/benchmarks_lavaan_", date, ".csv", sep = ""))

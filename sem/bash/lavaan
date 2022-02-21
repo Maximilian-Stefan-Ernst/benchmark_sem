@@ -1,0 +1,3 @@
+#!/bin/bash
+
+singularity exec --writable sem-writ.simg Rscript sem/benchmark_lavaan.R `date +%F_%H_%M`

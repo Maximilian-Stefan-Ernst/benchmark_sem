@@ -1,4 +1,4 @@
-pacman::p_load(stringr)
+library(stringr)
 
 lavaan_true_model <- function(
   n_factors, 
@@ -37,7 +37,7 @@ lavaan_true_model <- function(
   return(model)
 }
 
-lavaan_model <- function(n_factors, n_items, meanstructure){
+lavaan_model <- function(n_factors, n_items){
   model <- c()
   for(i in 1:n_factors){
     model[i] <- 
@@ -54,58 +54,6 @@ lavaan_model <- function(n_factors, n_items, meanstructure){
     model <- append(model, str_c("f", i+1, "~f", i, "\n"))
   }
   model <- paste(model, collapse = "")
-  return(model)
-}
-
-omx_model <- function(n_factors, n_items, data){
-  
-  dataRaw <- mxData(observed=data, type="raw")
-  
-  nobs = n_factors*n_items
-  lat_vars <- str_c("f", 1:n_factors)
-  observed_vars <- str_c("x_", 1:n_factors, "_")
-  observed_vars <- map(observed_vars, ~str_c(.x, 1:n_items))
-  
-  lat_from <- str_c("f", 1:(n_factors-1))
-  lat_to <- str_c("f", 2:n_factors)
-  
-  # residual variances
-  resVars <- mxPath( from=unlist(observed_vars), arrows=2,
-                     free=TRUE,
-                     labels=str_c("e", 1:nobs),
-                     values = 1)
-  # latent variances and covariance
-  latVars <- mxPath( lat_vars, arrows=2, connect="single",
-                     free=FALSE, values = 1)
-  
-  latCov <- mxPath( lat_from, lat_to, arrows=1, connect="single",
-                    free=TRUE, values = 0)
-
-  loadings <- pmap(list(lat_vars, observed_vars), 
-                   ~mxPath(
-                     from = ..1, 
-                     to = ..2,
-                     arrows = 1,
-                     values = 1,
-                     free = rep(T, n_items),
-                     labels = str_c("l_", .y)))
-  
-  means <- mxPath(from = 'one', to = unlist(observed_vars), 
-                  arrows=1,
-                  free=TRUE,
-                  values = 0)
-  
-  model <- 
-    mxModel(
-      str_c(
-        "factor_model_n_factors_",
-        n_factors,
-        "_n_items_",
-        n_items),
-      type="RAM",
-      manifestVars=observed_vars,
-      latentVars=lat_vars,
-      dataRaw, resVars, latVars, latCov, splice(loadings), means)
   return(model)
 }
 
@@ -129,21 +77,6 @@ benchmark_lavaan <- function(model, data, n_repetitions){
         model,
         data)
       )
-  return(out)
-}
-
-time_omx <- function(model){
-  mxRun(model)@output$backendTime
-}
-
-benchmark_omx <- function(model, n_repetitions){
-  out <- 
-    map_dfr(
-      1:n_repetitions, 
-      ~safe_and_quiet(
-        time_omx,
-        model)
-    )
   return(out)
 }
 
