@@ -93,11 +93,16 @@ data_lavaan <-
 if (any(!is.na(data_lavaan$error))) {print(data_lavaan$error)}
 if (any(!is.na(data_lavaan$warnings))) {print(data_lavaan$warnings)}
 if (any(!is.na(data_lavaan$messages))) {print(data_lavaan$messages)}
+
+data_julia <- mutate(
+  data_julia, 
+  missingness = as.double(str_replace(missingness, ",", ".")))
+
 data <- bind_rows(data_julia, data_lavaan)
 
 data <- mutate(
     data,
-    n_parameters = 2*(n_factors*n_items) + n_factors*(n_factors-1)/2,
+    n_parameters = 3*(n_factors*n_items) + n_factors-1,
     se = sd_time/sqrt(n_repetitions)
     )
 ```
@@ -115,7 +120,8 @@ data %>%
     geom_line() +
     geom_errorbar(aes(ymin = median_time - 2*se, ymax = median_time + 2*se)) +
     labs(color = "time:package") +
-    theme_minimal()
+    theme_minimal() +
+  facet_wrap(~missingness)
 ```
 
 ```{r julia log, echo=FALSE}
@@ -131,14 +137,15 @@ data %>%
     labs(color="time:package") +
     theme_minimal() +
     scale_y_log10() +
-    scale_x_log10()
+    scale_x_log10() +
+    facet_wrap(~missingness)
 ```
 
 ```{r julia ratio, echo=FALSE}
 data %>%
     filter(package == "julia") %>%
     mutate(datetime = ifelse(datetime == julia_latest, "latest", "previous")) %>%
-    select(n_parameters, datetime, median_time) %>%
+    select(n_parameters, datetime, median_time, missingness) %>%
     pivot_wider(
         names_from = datetime,
         values_from = median_time) %>%
@@ -149,7 +156,8 @@ data %>%
     geom_point() +
     geom_line() +
     theme_minimal() +
-    theme(text = element_text(color = "white"))
+    theme(text = element_text(color = "white")) +
+    facet_wrap(~missingness)
 ```
 
 # Comparison to Lavaan
@@ -164,7 +172,8 @@ data %>%
     geom_line() +
     geom_errorbar(aes(ymin = median_time - 2*se, ymax = median_time + 2*se)) +
     labs(color="time:package") +
-    theme_minimal()
+    theme_minimal() +
+    facet_wrap(~missingness)
 ```
 
 ```{r lavaan log, echo=FALSE}
@@ -179,13 +188,14 @@ data %>%
     labs(color = "time:package") +
     theme_minimal() +
     scale_y_log10() +
-    scale_x_log10()
+    scale_x_log10() +
+    facet_wrap(~missingness)
 ```
 
 ```{r lavaan ratio, echo=FALSE}
 data %>%
     filter((package == "lavaan"|datetime == julia_latest)) %>%
-    select(n_parameters, package, median_time) %>%
+    select(n_parameters, package, median_time, missingness) %>%
     pivot_wider(
         names_from = package,
         values_from = median_time) %>%
@@ -199,5 +209,6 @@ data %>%
     scale_y_continuous(
         limits = c(0, 1),
         breaks = c(seq(0, 0.1, 0.02), seq(0.1, 1, 0.1))
-    )
+    ) +
+    facet_wrap(~missingness)
 ```

@@ -29,6 +29,14 @@ fits = get_fits(models)
 
 correct = compare_estimates(fits, par_vec, config)
 
+nfact = 3
+nitem = 3
+
+nobs = nfact*nitem
+
+par_ind = [1:(2nobs+nfact-1)..., (2nobs+2nfact):(3nobs+2nfact-1)...]
+
+
 config.correct = correct
 
 ##############################################

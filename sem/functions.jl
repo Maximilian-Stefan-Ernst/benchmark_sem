@@ -48,7 +48,7 @@ function gen_SEM_RAM(nfact, nitem)
     A = sparse(Ind, Jnd, V, nnod, nnod)
     xind = nobs+1
     for i in nobs+1:nnod-1
-        A[i,i+1] = x[xind]
+        A[i+1,i] = x[xind]
         xind = xind+1
     end
 
@@ -91,7 +91,8 @@ function gen_model(nfact, nitem, data, backend)
             imply = RAM,
             diff = semdiff,
             loss = (SemFIML,),
-            start = simple
+            start_val = start_simple,
+            observed = SemObsMissing
         )
                 
     return model
@@ -139,9 +140,9 @@ function compare_estimate(fit, estimate, n_factors, n_items)
 
     nobs = nfact*nitem
 
-    par_ind = [1:(2nobs+nfact-1)..., (2nobs+2nfact-1):(3nobs+2nfact-1)...]
+    par_ind = [1:(2nobs+nfact-1)..., (2nobs+2nfact):(3nobs+2nfact-1)...]
 
-    solution = fit.minimizer
+    solution = fit.solution
 
     return StructuralEquationModels.compare_estimates(estimate.est[par_ind], solution, 0.01)
 
